@@ -98,8 +98,7 @@ class HttpCertificatePinningPlugin : FlutterPlugin, MethodCallHandler {
       handler?.post {
         result.error("URL_ERROR", "MalformedURLException", " ")
       }
-    }
-    catch (e: Exception) {
+    } catch (e: Exception) {
       handler?.post {
         result.error("UNKNOWN_ERROR", "An Unknown Error Occurred", " ")
       }
@@ -113,19 +112,15 @@ class HttpCertificatePinningPlugin : FlutterPlugin, MethodCallHandler {
   }
 
   private fun getFingerprint(httpsURL: String, connectTimeout: Int, httpHeaderArgs: Map<String, String>, type: String): String {
-    try {
-      val url = URL(httpsURL)
-      val httpClient: HttpsURLConnection = url.openConnection() as HttpsURLConnection
-      if (connectTimeout > 0) {
-        httpClient.connectTimeout = connectTimeout * 1000
-      }
-      httpHeaderArgs.forEach { (key, value) -> httpClient.setRequestProperty(key, value) }
-      httpClient.connect()
-      val cert: Certificate = httpClient.serverCertificates[0] as Certificate
-      return this.hashString(type, cert.encoded)
-    } catch (e: Exception) {
-       throw e
+    val url = URL(httpsURL)
+    val httpClient: HttpsURLConnection = url.openConnection() as HttpsURLConnection
+    if (connectTimeout > 0) {
+      httpClient.connectTimeout = connectTimeout * 1000
     }
+    httpHeaderArgs.forEach { (key, value) -> httpClient.setRequestProperty(key, value) }
+    httpClient.connect()
+    val cert: Certificate = httpClient.serverCertificates[0] as Certificate
+    return this.hashString(type, cert.encoded)
   }
 
   private fun hashString(type: String, input: ByteArray) =
