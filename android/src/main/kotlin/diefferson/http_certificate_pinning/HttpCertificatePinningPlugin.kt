@@ -23,6 +23,7 @@ class HttpCertificatePinningPlugin : FlutterPlugin, MethodCallHandler {
 
   private var threadExecutorService: ExecutorService? = null
   private var handler: Handler? = null
+  private var channel: MethodChannel? = null
 
   init {
     threadExecutorService = Executors.newSingleThreadExecutor()
@@ -30,8 +31,8 @@ class HttpCertificatePinningPlugin : FlutterPlugin, MethodCallHandler {
   }
 
   override fun onAttachedToEngine(binding: FlutterPlugin.FlutterPluginBinding) {
-    val channel = MethodChannel(binding.binaryMessenger, "http_certificate_pinning")
-    channel.setMethodCallHandler(HttpCertificatePinningPlugin())
+    channel = MethodChannel(binding.binaryMessenger, "http_certificate_pinning")
+    channel?.setMethodCallHandler(this)
   }
 
 
@@ -132,6 +133,7 @@ class HttpCertificatePinningPlugin : FlutterPlugin, MethodCallHandler {
   override fun onDetachedFromEngine(binding: FlutterPlugin.FlutterPluginBinding) {
     try {
       threadExecutorService?.shutdown()
-    }catch (_: Exception){}
+    } catch (_: Exception) {}
+    channel?.setMethodCallHandler(null)
   }
 }
