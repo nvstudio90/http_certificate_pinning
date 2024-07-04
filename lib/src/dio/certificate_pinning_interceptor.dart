@@ -58,22 +58,19 @@ class CertificatePinningInterceptor extends Interceptor {
           callFollowingErrorInterceptor,
         );
       }
-    } on Exception catch (e) {
-      dynamic error;
-
+    } catch (e) {
       if (e is PlatformException && e.code == 'CONNECTION_NOT_SECURE') {
-        error = const CertificateNotVerifiedException();
+        final error = const CertificateNotVerifiedException();
+        handler.reject(
+          DioException(
+            requestOptions: options,
+            error: error,
+          ),
+          callFollowingErrorInterceptor,
+        );
       } else {
-        error = CertificateCouldNotBeVerifiedException(e);
+        super.onRequest(options, handler);
       }
-
-      handler.reject(
-        DioException(
-          requestOptions: options,
-          error: error,
-        ),
-        callFollowingErrorInterceptor,
-      );
     }
   }
 }
