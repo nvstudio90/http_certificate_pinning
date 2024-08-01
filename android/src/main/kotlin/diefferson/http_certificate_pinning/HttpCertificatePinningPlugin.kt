@@ -6,6 +6,7 @@ import io.flutter.embedding.engine.plugins.FlutterPlugin
 import io.flutter.plugin.common.MethodCall
 import io.flutter.plugin.common.MethodChannel
 import io.flutter.plugin.common.MethodChannel.MethodCallHandler
+import io.flutter.plugin.common.MethodChannel.Result
 import java.io.IOException
 import java.net.MalformedURLException
 import java.net.SocketTimeoutException
@@ -24,14 +25,11 @@ class HttpCertificatePinningPlugin : FlutterPlugin, MethodCallHandler {
   private var handler: Handler? = null
   private var channel: MethodChannel? = null
 
-  init {
-    threadExecutorService = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors())
-    handler = Handler(Looper.getMainLooper())
-  }
-
   override fun onAttachedToEngine(binding: FlutterPlugin.FlutterPluginBinding) {
     channel = MethodChannel(binding.binaryMessenger, "http_certificate_pinning")
     channel?.setMethodCallHandler(this)
+    threadExecutorService = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors())
+    handler = Handler(Looper.getMainLooper())
   }
 
   override fun onMethodCall(call: MethodCall, result: Result) {
