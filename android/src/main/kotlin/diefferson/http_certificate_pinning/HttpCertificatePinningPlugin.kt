@@ -6,7 +6,6 @@ import io.flutter.embedding.engine.plugins.FlutterPlugin
 import io.flutter.plugin.common.MethodCall
 import io.flutter.plugin.common.MethodChannel
 import io.flutter.plugin.common.MethodChannel.MethodCallHandler
-import io.flutter.plugin.common.MethodChannel.Result
 import java.io.IOException
 import java.net.MalformedURLException
 import java.net.SocketTimeoutException
@@ -26,7 +25,7 @@ class HttpCertificatePinningPlugin : FlutterPlugin, MethodCallHandler {
   private var channel: MethodChannel? = null
 
   init {
-    threadExecutorService = Executors.newSingleThreadExecutor()
+    threadExecutorService = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors())
     handler = Handler(Looper.getMainLooper())
   }
 
@@ -34,7 +33,6 @@ class HttpCertificatePinningPlugin : FlutterPlugin, MethodCallHandler {
     channel = MethodChannel(binding.binaryMessenger, "http_certificate_pinning")
     channel?.setMethodCallHandler(this)
   }
-
 
   override fun onMethodCall(call: MethodCall, result: Result) {
     try {
@@ -52,7 +50,7 @@ class HttpCertificatePinningPlugin : FlutterPlugin, MethodCallHandler {
       }
     } catch (e: Exception) {
       handler?.post {
-        result.error(e.toString(), "", "")
+        result.error("UNKNOWN_ERROR", "An Unknown Error Occurred", "")
       }
     }
   }
@@ -74,7 +72,7 @@ class HttpCertificatePinningPlugin : FlutterPlugin, MethodCallHandler {
       val httpHeaderArgs: Map<String, String> = arguments["headers"] as Map<String, String>
       val timeout: Int = arguments["timeout"] as Int
       val type: String = arguments["type"] as String
-      if (this.checkConnexion(serverURL, allowedFingerprints, httpHeaderArgs, timeout, type)) {
+      if (this.checkConnection(serverURL, allowedFingerprints, httpHeaderArgs, timeout, type)) {
         handler?.post {
           result.success("CONNECTION_SECURE")
         }
@@ -107,7 +105,7 @@ class HttpCertificatePinningPlugin : FlutterPlugin, MethodCallHandler {
   }
 
 
-  private fun checkConnexion(serverURL: String, allowedFingerprints: List<String>, httpHeaderArgs: Map<String, String>, timeout: Int, type: String): Boolean {
+  private fun checkConnection(serverURL: String, allowedFingerprints: List<String>, httpHeaderArgs: Map<String, String>, timeout: Int, type: String): Boolean {
     val sha: String = this.getFingerprint(serverURL, timeout, httpHeaderArgs, type)
     return allowedFingerprints.map { fp -> fp.uppercase().replace("\\s".toRegex(), "") }.contains(sha)
   }
@@ -115,9 +113,7 @@ class HttpCertificatePinningPlugin : FlutterPlugin, MethodCallHandler {
   private fun getFingerprint(httpsURL: String, connectTimeout: Int, httpHeaderArgs: Map<String, String>, type: String): String {
     val url = URL(httpsURL)
     val httpClient: HttpsURLConnection = url.openConnection() as HttpsURLConnection
-    if (connectTimeout > 0) {
-      httpClient.connectTimeout = connectTimeout * 1000
-    }
+    httpClient.connectTimeout = 5000
     httpHeaderArgs.forEach { (key, value) -> httpClient.setRequestProperty(key, value) }
     httpClient.connect()
     val cert: Certificate = httpClient.serverCertificates[0] as Certificate
